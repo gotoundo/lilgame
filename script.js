@@ -30,7 +30,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
         const newY = playerPos.y + dy;
         if (newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize) {
             playerPos = { x: newX, y: newY };
-            updateGame();
+            if (!checkCollisions()) { // Only update the game if there's no collision resulting in game over
+                updateGame();
+            }
         }
     }
 
@@ -44,23 +46,48 @@ document.addEventListener('DOMContentLoaded', (event) => {
         updateGame();
     }
 
-    // Move enemies towards the player
+   // Move enemies towards the player without overlapping
     function moveEnemies() {
+        const newPositions = []; // Track new positions to prevent overlaps
+
         enemies.forEach((enemy, index) => {
+            let possibleMoves = [
+                { x: enemy.x, y: enemy.y } // Stay in place
+            ];
+            
+            // Add possible new positions
             if (enemy.x < playerPos.x) {
-                enemy.x++;
+                possibleMoves.push({ x: enemy.x + 1, y: enemy.y });
             } else if (enemy.x > playerPos.x) {
-                enemy.x--;
+                possibleMoves.push({ x: enemy.x - 1, y: enemy.y });
+            }
+            if (enemy.y < playerPos.y) {
+                possibleMoves.push({ x: enemy.x, y: enemy.y + 1 });
+            } else if (enemy.y > playerPos.y) {
+                possibleMoves.push({ x: enemy.x, y: enemy.y - 1 });
             }
 
-            if (enemy.y < playerPos.y) {
-                enemy.y++;
-            } else if (enemy.y > playerPos.y) {
-                enemy.y--;
+            // Filter out positions already taken by other enemies or the player
+            possibleMoves = possibleMoves.filter(pos =>
+                !newPositions.some(newPos => newPos.x === pos.x && newPos.y === pos.y) &&
+                !enemies.some(otherEnemy => otherEnemy.x === pos.x && otherEnemy.y === pos.y) &&
+                !(playerPos.x === pos.x && playerPos.y === pos.y)
+            );
+
+            // Choose a move from the filtered possibilities
+            if (possibleMoves.length > 1) { // Exclude the original position if there are other options
+                possibleMoves.shift(); // Remove the original stay-in-place option
             }
+            const chosenMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+
+            // Update the enemy's position
+            newPositions.push(chosenMove); // Save this move to prevent others from moving here
+            enemies[index] = chosenMove; // Update the enemy's position
         });
+
         updateGame();
     }
+
 
     // Update game state: grid and score
     function updateGame() {
@@ -75,6 +102,22 @@ document.addEventListener('DOMContentLoaded', (event) => {
             y: Math.floor(Math.random() * gridSize)
         });
         updateGame();
+    }
+
+    // Check for collisions with enemies
+    function checkCollisions() {
+        if (enemies.some(enemy => enemy.x === playerPos.x && enemy.y === playerPos.y)) {
+            health--; // Decrease health if collision is detected
+            // After collision, immediately update the game state to reflect changes in health
+            updateGame();
+            if (health <= 0) {
+                alert('Game Over!');
+                document.removeEventListener('keydown', handleKeyDown); // Disable further input
+                // Here you could add logic to reset the game or direct the player elsewhere
+                return true; // Return true to indicate a collision occurred
+            }
+        }
+        return false; // Return false to indicate no collision occurred
     }
 
     // Keyboard controls
@@ -105,3 +148,4 @@ document.addEventListener('DOMContentLoaded', (event) => {
     for (let i = 0; i < 5; i++) { addEnemy(); } // Start with 5 enemies
     updateGame();
 });
+
