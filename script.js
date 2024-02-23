@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     let playerPos = { x: Math.floor(gridSize / 2), y: Math.floor(gridSize / 2) };
     let enemies = [];
     let score = 0;
+    let health = 3; // Initialize this at the top of your script or in the start/restart game function
+
 
     const grid = document.getElementById('grid');
     const scoreDisplay = document.getElementById('score');
@@ -47,46 +49,58 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 
    // Move enemies towards the player without overlapping
-    function moveEnemies() {
-        const newPositions = []; // Track new positions to prevent overlaps
+   function moveEnemies() {
+    const newPositions = []; // Track new positions to prevent overlaps
 
-        enemies.forEach((enemy, index) => {
-            let possibleMoves = [
-                { x: enemy.x, y: enemy.y } // Stay in place
-            ];
-            
-            // Add possible new positions
-            if (enemy.x < playerPos.x) {
-                possibleMoves.push({ x: enemy.x + 1, y: enemy.y });
-            } else if (enemy.x > playerPos.x) {
-                possibleMoves.push({ x: enemy.x - 1, y: enemy.y });
-            }
-            if (enemy.y < playerPos.y) {
-                possibleMoves.push({ x: enemy.x, y: enemy.y + 1 });
-            } else if (enemy.y > playerPos.y) {
-                possibleMoves.push({ x: enemy.x, y: enemy.y - 1 });
-            }
+    enemies.forEach((enemy, index) => {
+        let possibleMoves = [
+            { x: enemy.x, y: enemy.y } // Stay in place
+        ];
 
-            // Filter out positions already taken by other enemies or the player
-            possibleMoves = possibleMoves.filter(pos =>
-                !newPositions.some(newPos => newPos.x === pos.x && newPos.y === pos.y) &&
-                !enemies.some(otherEnemy => otherEnemy.x === pos.x && otherEnemy.y === pos.y) &&
-                !(playerPos.x === pos.x && playerPos.y === pos.y)
-            );
+        // Add possible new positions
+        if (enemy.x < playerPos.x) {
+            possibleMoves.push({ x: enemy.x + 1, y: enemy.y });
+        } else if (enemy.x > playerPos.x) {
+            possibleMoves.push({ x: enemy.x - 1, y: enemy.y });
+        }
+        if (enemy.y < playerPos.y) {
+            possibleMoves.push({ x: enemy.x, y: enemy.y + 1 });
+        } else if (enemy.y > playerPos.y) {
+            possibleMoves.push({ x: enemy.x, y: enemy.y - 1 });
+        }
 
-            // Choose a move from the filtered possibilities
+        // Filter out positions already taken by other enemies or the player
+        possibleMoves = possibleMoves.filter(pos =>
+            !newPositions.some(newPos => newPos.x === pos.x && newPos.y === pos.y) &&
+            !enemies.some(otherEnemy => otherEnemy.x === pos.x && otherEnemy.y === pos.y) &&
+            !(playerPos.x === pos.x && playerPos.y === pos.y)
+        );
+
+        // Choose a move from the filtered possibilities
+        if (possibleMoves.length > 0) {
             if (possibleMoves.length > 1) { // Exclude the original position if there are other options
                 possibleMoves.shift(); // Remove the original stay-in-place option
             }
             const chosenMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
 
-            // Update the enemy's position
-            newPositions.push(chosenMove); // Save this move to prevent others from moving here
-            enemies[index] = chosenMove; // Update the enemy's position
-        });
+            // Check if chosenMove is defined
+            if (chosenMove) {
+                // Update the enemy's position
+                newPositions.push(chosenMove); // Save this move to prevent others from moving here
+                enemies[index] = chosenMove; // Update the enemy's position
+            } else {
+                // Keep the enemy in its current position if no valid move is found
+                newPositions.push({ x: enemy.x, y: enemy.y });
+            }
+        } else {
+            // If no possible moves, add current position to newPositions to avoid others moving into it
+            newPositions.push({ x: enemy.x, y: enemy.y });
+        }
+    });
 
-        updateGame();
-    }
+    updateGame();
+}
+
 
 
     // Update game state: grid and score
@@ -104,21 +118,32 @@ document.addEventListener('DOMContentLoaded', (event) => {
         updateGame();
     }
 
-    // Check for collisions with enemies
     function checkCollisions() {
         if (enemies.some(enemy => enemy.x === playerPos.x && enemy.y === playerPos.y)) {
             health--; // Decrease health if collision is detected
-            // After collision, immediately update the game state to reflect changes in health
+            console.log("losing health");
             updateGame();
             if (health <= 0) {
-                alert('Game Over!');
+                document.getElementById('lose-screen').style.display = 'block'; // Show the "You Lose!" screen
                 document.removeEventListener('keydown', handleKeyDown); // Disable further input
-                // Here you could add logic to reset the game or direct the player elsewhere
                 return true; // Return true to indicate a collision occurred
             }
         }
         return false; // Return false to indicate no collision occurred
     }
+    
+
+    function restartGame() {
+        health = 3; // Reset health, assuming starting health is 3
+        score = 0; // Reset score
+        enemies = []; // Clear enemies
+        playerPos = { x: Math.floor(gridSize / 2), y: Math.floor(gridSize / 2) }; // Reset player position
+        document.getElementById('lose-screen').style.display = 'none'; // Hide the "You Lose!" screen
+        document.addEventListener('keydown', handleKeyDown); // Re-enable keyboard controls
+        updateGame(); // Re-initialize the game state
+        for (let i = 0; i < 5; i++) { addEnemy(); } // Add initial enemies
+    }
+    
 
     // Keyboard controls
     document.addEventListener('keydown', (e) => {
