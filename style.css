@@ -1,0 +1,39 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#grid {
+    display: grid;
+    grid-template-columns: repeat(10, 30px); /* Adjust based on grid size */
+    grid-template-rows: repeat(10, 30px); /* Adjust based on grid size */
+    gap: 2px;
+}
+
+.grid-cell {
+    width: 30px;
+    height: 30px;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+}
+
+.player {
+    background-color: blue;
+}
+
+.enemy {
+    background-color: red;
+}
