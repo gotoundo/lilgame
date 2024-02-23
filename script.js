@@ -134,15 +134,31 @@ document.addEventListener('DOMContentLoaded', (event) => {
     
 
     function restartGame() {
-        health = 3; // Reset health, assuming starting health is 3
+        health = 3; // Reset health
         score = 0; // Reset score
         enemies = []; // Clear enemies
         playerPos = { x: Math.floor(gridSize / 2), y: Math.floor(gridSize / 2) }; // Reset player position
         document.getElementById('lose-screen').style.display = 'none'; // Hide the "You Lose!" screen
-        document.addEventListener('keydown', handleKeyDown); // Re-enable keyboard controls
-        updateGame(); // Re-initialize the game state
+        updateGame(); // Refresh the game state
         for (let i = 0; i < 5; i++) { addEnemy(); } // Add initial enemies
     }
+    
+
+    function handleKeyDown(e) {
+        switch (e.key) {
+            case 'ArrowUp': movePlayer(0, -1); break;
+            case 'ArrowDown': movePlayer(0, 1); break;
+            case 'ArrowLeft': movePlayer(-1, 0); break;
+            case 'ArrowRight': movePlayer(1, 0); break;
+            case ' ': // Spacebar
+                radialBlast();
+                break;
+            case 'q':
+                alert('Game Over!'); // Add any cleanup or game over logic here
+                break;
+        }
+    }
+    
     
 
     // Keyboard controls
@@ -160,6 +176,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 break;
         }
     });
+
+    document.getElementById('playAgainButton').addEventListener('click', restartGame);
+
 
     // Enemy logic (move and spawn)
     setInterval(() => {
