@@ -40,13 +40,26 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     // Check for nearby enemies and remove them
     function radialBlast() {
+        // Get all cells
+        const cells = document.querySelectorAll('.grid-cell');
         enemies = enemies.filter(enemy => {
             const isNear = Math.abs(enemy.x - playerPos.x) <= 1 && Math.abs(enemy.y - playerPos.y) <= 1;
-            if (isNear) score++;
+            if (isNear) {
+                // Flash adjacent squares
+                const index = enemy.y * gridSize + enemy.x;
+                if (cells[index]) {
+                    cells[index].classList.add('flash-attack');
+                    setTimeout(() => {
+                        cells[index].classList.remove('flash-attack');
+                    }, 500); // Remove flash after 0.5 seconds
+                }
+                score++;
+            }
             return !isNear;
         });
         updateGame();
     }
+    
 
    // Move enemies towards the player without overlapping
    function moveEnemies() {
