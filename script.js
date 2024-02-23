@@ -72,34 +72,48 @@ document.addEventListener('DOMContentLoaded', (event) => {
         // Filter out positions already taken by other enemies or the player
         possibleMoves = possibleMoves.filter(pos =>
             !newPositions.some(newPos => newPos.x === pos.x && newPos.y === pos.y) &&
-            !enemies.some(otherEnemy => otherEnemy.x === pos.x && otherEnemy.y === pos.y) &&
-            !(playerPos.x === pos.x && playerPos.y === pos.y)
+            !enemies.some(otherEnemy => otherEnemy.x === pos.x && otherEnemy.y === pos.y)
         );
 
-        // Choose a move from the filtered possibilities
-        if (possibleMoves.length > 0) {
-            if (possibleMoves.length > 1) { // Exclude the original position if there are other options
-                possibleMoves.shift(); // Remove the original stay-in-place option
-            }
-            const chosenMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-
-            // Check if chosenMove is defined
-            if (chosenMove) {
-                // Update the enemy's position
-                newPositions.push(chosenMove); // Save this move to prevent others from moving here
-                enemies[index] = chosenMove; // Update the enemy's position
-            } else {
-                // Keep the enemy in its current position if no valid move is found
-                newPositions.push({ x: enemy.x, y: enemy.y });
+        // Check if any possible move could have reached the player
+        const couldMoveToPlayer = possibleMoves.some(pos => playerPos.x === pos.x && playerPos.y === pos.y);
+        
+        // If an enemy could have moved into the player's position, apply damage
+        if (couldMoveToPlayer) {
+            health--; // Decrease health
+            console.log("Player takes damage from enemy!");
+            updateGame(); // Update game state
+            // If health is reduced to 0 or less, end the game
+            if (health <= 0) {
+                document.getElementById('lose-screen').style.display = 'block'; // Show the "You Lose!" screen
+                document.removeEventListener('keydown', handleKeyDown); // Disable further input
             }
         } else {
-            // If no possible moves, add current position to newPositions to avoid others moving into it
-            newPositions.push({ x: enemy.x, y: enemy.y });
+            // Choose a move from the filtered possibilities
+            possibleMoves = possibleMoves.filter(pos => !(playerPos.x === pos.x && playerPos.y === pos.y)); // Remove player's position
+            if (possibleMoves.length > 0) {
+                if (possibleMoves.length > 1) { // Exclude the original position if there are other options
+                    possibleMoves.shift(); // Remove the original stay-in-place option
+                }
+                const chosenMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+
+                // Update the enemy's position if a valid move is found
+                if (chosenMove) {
+                    newPositions.push(chosenMove); // Save this move to prevent others from moving here
+                    enemies[index] = chosenMove; // Update the enemy's position
+                } else {
+                    // Keep the enemy in its current position if no valid move is found
+                    newPositions.push({ x: enemy.x, y: enemy.y });
+                }
+            } else {
+                // If no possible moves, add current position to newPositions to avoid others moving into it
+                newPositions.push({ x: enemy.x, y: enemy.y });
+            }
         }
     });
-
     updateGame();
 }
+
 
 
 
